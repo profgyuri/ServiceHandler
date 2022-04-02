@@ -1,0 +1,96 @@
+﻿<Window x:Class="ServiceHandler.WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Loaded="Window_Loaded"
+        FontSize="24"
+        FontFamily="Segoe UI"
+        Title="Service Handler" Height="450" Width="630">
+
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0 5" />
+            <Setter Property="Grid.ColumnSpan" Value="3" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Margin" Value="5 0"/>
+        </Style>
+    </Window.Resources>
+    
+    <Grid
+        Margin="10 5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock
+            Text="Name:"/>
+        <TextBox
+            x:Name="ServiceNameTextBox"
+            Grid.Row="0" 
+            Grid.Column="1"/>
+        <TextBlock
+            Text="Path:"
+            Grid.Row="1" 
+            Grid.Column="0"
+            VerticalAlignment="Center"/>
+        <TextBox
+            x:Name="LocalPathTextBox"
+            Grid.Column="1"
+            Grid.Row="1">
+            <TextBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        x:Name="BrowseMenuItem"
+                        Header="Browse"
+                        Click="BrowseMenuItem_Click"/>
+                </ContextMenu>
+            </TextBox.ContextMenu>
+        </TextBox>
+        <Button
+            x:Name="InstallButton"
+            Content="Install"
+            Click="InstallButton_Click"
+            Grid.Row="2" 
+            Grid.Column="0" />
+        <Button
+            x:Name="StartButton"
+            IsEnabled="{Binding ElementName=ServiceListView, Path=HasItems}"
+            Content="Start"
+            Click="StartButton_Click"
+            Grid.Row="2"
+            Grid.Column="1"/>
+        <Button
+            x:Name="StopButton"
+            IsEnabled="{Binding ElementName=ServiceListView, Path=HasItems}"
+            Content="Stop"
+            Click="StopButton_Click"
+            Grid.Row="2"
+            Grid.Column="2"/>
+        <Button
+            x:Name="DeleteButton"
+            IsEnabled="{Binding ElementName=ServiceListView, Path=HasItems}"
+            Content="Delete"
+            Click="DeleteButton_Click"
+            Grid.Row="2"
+            Grid.Column="3"/>
+        <ListView
+            x:Name="ServiceListView"
+            Grid.Row="3"
+            Grid.ColumnSpan="4"
+            Grid.Column="0"
+            Margin="0 5"/>
+    </Grid>
+</Window>
