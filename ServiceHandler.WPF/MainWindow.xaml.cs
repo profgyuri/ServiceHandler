@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using Microsoft.Win32;
 
 namespace ServiceHandler.WPF;
@@ -18,48 +19,77 @@ public partial class MainWindow : Window
 
     private void InstallButton_Click(object sender, RoutedEventArgs e)
     {
-        _serviceManager.AddService(ServiceNameTextBox.Text, LocalPathTextBox.Text);
+        try
+        {
+            _serviceManager.AddService(ServiceNameTextBox.Text, LocalPathTextBox.Text);
+            _serviceManager.StartService(ServiceNameTextBox.Text);
 
-        RefreshServicesList();
+            RefreshServicesList();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error!");
+        }
     }
 
     private void StartButton_Click(object sender, RoutedEventArgs e)
     {
-        var name = ServiceListView.SelectedItem.ToString();
+        var name = ServiceListView.SelectedItem?.ToString();
 
         if (ServiceListView.Items.Count == 0 || string.IsNullOrWhiteSpace(name))
         {
             return;
         }
 
-        _serviceManager.StartService(name);
+        try
+        {
+            _serviceManager.StartService(name);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error!");
+        }
     }
 
     private void StopButton_Click(object sender, RoutedEventArgs e)
     {
-        var name = ServiceListView.SelectedItem.ToString();
+        var name = ServiceListView.SelectedItem?.ToString();
 
         if (ServiceListView.Items.Count == 0 || string.IsNullOrWhiteSpace(name))
         {
             return;
         }
 
-        _serviceManager.StopService(name);
+        try
+        {
+            _serviceManager.StopService(name);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error!");
+        }
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
     {
-        var name = ServiceListView.SelectedItem.ToString();
+        var name = ServiceListView.SelectedItem?.ToString();
 
         if (ServiceListView.Items.Count == 0 || string.IsNullOrWhiteSpace(name))
         {
             return;
         }
 
-        _serviceManager.StopService(name);
-        _serviceManager.RemoveService(name);
+        try
+        {
+            _serviceManager.StopService(name);
+            _serviceManager.RemoveService(name);
 
-        RefreshServicesList();
+            RefreshServicesList();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error!");
+        }
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)

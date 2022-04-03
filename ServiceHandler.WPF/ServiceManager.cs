@@ -9,7 +9,6 @@ namespace ServiceHandler.WPF;
 
 internal class ServiceManager
 {
-    private ServiceController _serviceController;
     private const string ServicePrefix = "profgyuri-";
     private const string Create = "create";
     private const string Delete = "delete";
@@ -25,7 +24,16 @@ internal class ServiceManager
     {
         if (!File.Exists(path))
         {
-            throw new FileNotFoundException("File not found!", path);
+            throw new FileNotFoundException("File not found on given path!", path);
+        }
+
+        switch (Path.GetExtension(path))
+        {
+            case ".exe":
+            case ".dll":
+                break;
+            default:
+                throw new InvalidOperationException("Invalid file chosen! Only .exe and .dll files are supported!");
         }
 
         if (GetServices().Any(x => x == serviceName))
@@ -54,8 +62,8 @@ internal class ServiceManager
     {
         BasicServiceCommand(serviceName, Start);
 
-        _serviceController = new ServiceController(ServicePrefix + serviceName);
-        _serviceController.WaitForStatus(ServiceControllerStatus.Running);
+        var serviceController = new ServiceController(ServicePrefix + serviceName);
+        serviceController.WaitForStatus(ServiceControllerStatus.Running);
     }
 
     /// <summary>
@@ -66,15 +74,16 @@ internal class ServiceManager
     {
         BasicServiceCommand(serviceName, Stop);
 
-        _serviceController = new ServiceController(ServicePrefix + serviceName);
-        _serviceController.WaitForStatus(ServiceControllerStatus.Stopped);
+        var serviceController = new ServiceController(ServicePrefix + serviceName);
+        serviceController.WaitForStatus(ServiceControllerStatus.Stopped);
     }
 
     private void BasicServiceCommand(string serviceName, string command, string path = "")
     {
         if (string.IsNullOrWhiteSpace(serviceName))
         {
-            throw new ArgumentNullException(nameof(serviceName));
+            throw new ArgumentNullException("The name of the service cannot be empty!",
+                new ArgumentNullException(nameof(serviceName)));
         }
 
         if (string.IsNullOrWhiteSpace(command))
