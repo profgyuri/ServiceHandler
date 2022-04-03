@@ -9,9 +9,12 @@ namespace ServiceHandler.WPF;
 
 internal class ServiceManager
 {
-    private const string ServicePrefix = "profgyuri.";
+    private ServiceController _serviceController;
+    private const string ServicePrefix = "profgyuri-";
     private const string Create = "create";
     private const string Delete = "delete";
+    private const string Start = "start";
+    private const string Stop = "stop";
 
     /// <summary>
     ///     Tries to register a new windows service.
@@ -20,14 +23,9 @@ internal class ServiceManager
     /// <param name="path">Local path of the .exe or .dll file to install the new service from.</param>
     public void AddService(string serviceName, string path)
     {
-        if (string.IsNullOrWhiteSpace(serviceName))
+        if (!File.Exists(path))
         {
-            throw new ArgumentNullException(nameof(serviceName));
-        }
-
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-        {
-            throw new ArgumentNullException(nameof(path));
+            throw new FileNotFoundException("File not found!", path);
         }
 
         if (GetServices().Any(x => x == serviceName))
@@ -35,11 +33,7 @@ internal class ServiceManager
             return;
         }
 
-        var info = GetProcessInfo(Create, $"{ServicePrefix}{serviceName}");
-        info.Arguments += path;
-
-        var process = Process.Start(info);
-        process?.WaitForExit();
+        BasicServiceCommand(serviceName, Create, path);
     }
 
     /// <summary>
@@ -49,17 +43,46 @@ internal class ServiceManager
     /// <exception cref="ArgumentNullException">When <paramref name="serviceName" /> is not valid.</exception>
     public void RemoveService(string serviceName)
     {
+        BasicServiceCommand(serviceName, Delete);
+    }
+
+    /// <summary>
+    ///     Starts a windows service.
+    /// </summary>
+    /// <param name="serviceName">Name of the windows service to start.</param>
+    public void StartService(string serviceName)
+    {
+        BasicServiceCommand(serviceName, Start);
+
+        _serviceController = new ServiceController(ServicePrefix + serviceName);
+        _serviceController.WaitForStatus(ServiceControllerStatus.Running);
+    }
+
+    /// <summary>
+    ///     Stops a windows service.
+    /// </summary>
+    /// <param name="serviceName">Name of the windows service to stop.</param>
+    public void StopService(string serviceName)
+    {
+        BasicServiceCommand(serviceName, Stop);
+
+        _serviceController = new ServiceController(ServicePrefix + serviceName);
+        _serviceController.WaitForStatus(ServiceControllerStatus.Stopped);
+    }
+
+    private void BasicServiceCommand(string serviceName, string command, string path = "")
+    {
         if (string.IsNullOrWhiteSpace(serviceName))
         {
             throw new ArgumentNullException(nameof(serviceName));
         }
 
-        if (GetServices().All(x => x != serviceName))
+        if (string.IsNullOrWhiteSpace(command))
         {
-            return;
+            throw new ArgumentNullException(nameof(command));
         }
 
-        var info = GetProcessInfo(Delete, $"{ServicePrefix}{serviceName}");
+        var info = GetProcessInfo(command, $"{ServicePrefix}{serviceName}", path);
 
         var process = Process.Start(info);
         process?.WaitForExit();
@@ -71,20 +94,23 @@ internal class ServiceManager
             ServiceController
                 .GetServices()
                 .Where(x => x.ServiceName.StartsWith(ServicePrefix))
-                .Select(x => x.ServiceName[(ServicePrefix.Length - 1)..]);
+                .Select(x => x.ServiceName[ServicePrefix.Length..]);
 
         return services;
     }
 
-    private ProcessStartInfo GetProcessInfo(string type, string serviceName)
+    private ProcessStartInfo GetProcessInfo(string type, string serviceName, string path = "")
     {
         return new ProcessStartInfo
         {
             UseShellExecute = true,
             RedirectStandardOutput = false,
             FileName = "powershell.exe",
-            Arguments = "sc.exe " + type + $" \"{serviceName}\"",
-            CreateNoWindow = true
+            Arguments = string.IsNullOrWhiteSpace(path)
+                ? $"sc.exe {type} \"{serviceName}\""
+                : $"sc.exe {type} \"{serviceName}\" binpath=\"{path}\"",
+            CreateNoWindow = true,
+            Verb = "runas"
         };
     }
 }

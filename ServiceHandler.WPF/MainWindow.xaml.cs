@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.ServiceProcess;
-using System.Windows;
+﻿using System.Windows;
 using Microsoft.Win32;
 
 namespace ServiceHandler.WPF;
@@ -10,13 +8,11 @@ namespace ServiceHandler.WPF;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private readonly ServiceController _serviceController;
     private readonly ServiceManager _serviceManager;
 
     public MainWindow()
     {
         InitializeComponent();
-        _serviceController = new ServiceController();
         _serviceManager = new ServiceManager();
     }
 
@@ -24,7 +20,7 @@ public partial class MainWindow : Window
     {
         _serviceManager.AddService(ServiceNameTextBox.Text, LocalPathTextBox.Text);
 
-        ServiceListView.Items.Add(ServiceNameTextBox.Text);
+        RefreshServicesList();
     }
 
     private void StartButton_Click(object sender, RoutedEventArgs e)
@@ -36,15 +32,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _serviceController.ServiceName =
-            _serviceManager
-                .GetServices()
-                .FirstOrDefault(x => x.EndsWith(name))!;
-
-        if (_serviceController.Status == ServiceControllerStatus.Stopped)
-        {
-            _serviceController.Start();
-        }
+        _serviceManager.StartService(name);
     }
 
     private void StopButton_Click(object sender, RoutedEventArgs e)
@@ -56,15 +44,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _serviceController.ServiceName =
-            _serviceManager
-                .GetServices()
-                .FirstOrDefault(x => x.EndsWith(name))!;
-
-        if (_serviceController.Status == ServiceControllerStatus.Running)
-        {
-            _serviceController.Stop();
-        }
+        _serviceManager.StopService(name);
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
@@ -76,33 +56,32 @@ public partial class MainWindow : Window
             return;
         }
 
-        _serviceController.ServiceName =
-            _serviceManager
-                .GetServices()
-                .FirstOrDefault(x => x.EndsWith(name))!;
-
-        if (_serviceController.Status == ServiceControllerStatus.Running)
-        {
-            _serviceController.Stop();
-        }
-
-        ServiceListView.Items.Remove(name);
-
+        _serviceManager.StopService(name);
         _serviceManager.RemoveService(name);
+
+        RefreshServicesList();
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        RefreshServicesList();
+    }
+
+    private void RefreshServicesList()
+    {
         ServiceListView.Items.Clear();
-        ServiceListView.ItemsSource = _serviceManager.GetServices();
+        foreach (var service in _serviceManager.GetServices())
+        {
+            ServiceListView.Items.Add(service);
+        }
     }
 
     private void BrowseMenuItem_Click(object sender, RoutedEventArgs e)
     {
         var openFileDialog = new OpenFileDialog
         {
-            Filter = "*.exe|*.dll",
-            InitialDirectory = "c:"
+            Filter = "Executables|*.exe|Libraries|*.dll|All Files|*.*",
+            InitialDirectory = @"e:\!Programming\Publish\"
         };
 
         if (openFileDialog.ShowDialog() == true)
